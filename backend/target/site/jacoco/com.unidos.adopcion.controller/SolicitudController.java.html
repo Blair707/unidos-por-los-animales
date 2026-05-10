@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SolicitudController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Unidos por los Animales - Adopcion</a> &gt; <a href="index.source.html" class="el_package">com.unidos.adopcion.controller</a> &gt; <span class="el_source">SolicitudController.java</span></div><h1>SolicitudController.java</h1><pre class="source lang-java linenums">package com.unidos.adopcion.controller;
+
+import com.unidos.adopcion.model.SolicitudAdopcion;
+import com.unidos.adopcion.model.SolicitudAdopcion.EstadoSolicitud;
+import com.unidos.adopcion.repository.UsuarioRepository;
+import com.unidos.adopcion.service.SolicitudService;
+import lombok.Data;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping(&quot;/api/solicitudes&quot;)
+<span class="nc" id="L18">public class SolicitudController {</span>
+
+    @Autowired private SolicitudService solicitudService;
+    @Autowired private UsuarioRepository usuarioRepo;
+
+    /** Usuario: crear solicitud */
+    @PostMapping
+    public SolicitudAdopcion crear(@RequestBody SolicitudRequest req, Authentication auth) {
+<span class="nc" id="L26">        Long usuarioId = usuarioRepo.findByEmail(auth.getName())</span>
+<span class="nc" id="L27">                .orElseThrow().getId();</span>
+
+<span class="nc" id="L29">        SolicitudAdopcion datos = new SolicitudAdopcion();</span>
+<span class="nc" id="L30">        datos.setMotivo(req.getMotivo());</span>
+<span class="nc" id="L31">        datos.setTienePatio(req.isTienePatio());</span>
+<span class="nc" id="L32">        datos.setTieneOtrasMascotas(req.isTieneOtrasMascotas());</span>
+<span class="nc" id="L33">        datos.setDescripcionHogar(req.getDescripcionHogar());</span>
+
+<span class="nc" id="L35">        return solicitudService.crear(usuarioId, req.getMascotaId(), datos);</span>
+    }
+
+    /** Usuario: mis solicitudes */
+    @GetMapping(&quot;/mis-solicitudes&quot;)
+    public List&lt;SolicitudAdopcion&gt; misSolicitudes(Authentication auth) {
+<span class="nc" id="L41">        Long usuarioId = usuarioRepo.findByEmail(auth.getName())</span>
+<span class="nc" id="L42">                .orElseThrow().getId();</span>
+<span class="nc" id="L43">        return solicitudService.listarPorUsuario(usuarioId);</span>
+    }
+
+    /** Admin/Coordinador: listar todas */
+    @GetMapping
+    @PreAuthorize(&quot;hasAnyRole('ADMIN','COORDINADOR')&quot;)
+    public List&lt;SolicitudAdopcion&gt; todas(@RequestParam(required = false) EstadoSolicitud estado) {
+<span class="nc bnc" id="L50" title="All 2 branches missed.">        if (estado != null) return solicitudService.listarPorEstado(estado);</span>
+<span class="nc" id="L51">        return solicitudService.listarTodas();</span>
+    }
+
+    /** Admin/Coordinador: cambiar estado */
+    @PatchMapping(&quot;/{id}/estado&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN','COORDINADOR')&quot;)
+    public SolicitudAdopcion cambiarEstado(@PathVariable Long id,
+                                           @RequestParam EstadoSolicitud estado) {
+<span class="nc" id="L59">        return solicitudService.actualizarEstado(id, estado);</span>
+    }
+
+    @Data
+    static class SolicitudRequest {
+        private Long mascotaId;
+        private String motivo;
+        private boolean tienePatio;
+        private boolean tieneOtrasMascotas;
+        private String descripcionHogar;
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

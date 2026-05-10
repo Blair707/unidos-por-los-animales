@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuthService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Unidos por los Animales - Adopcion</a> &gt; <a href="index.source.html" class="el_package">com.unidos.adopcion.service</a> &gt; <span class="el_source">AuthService.java</span></div><h1>AuthService.java</h1><pre class="source lang-java linenums">package com.unidos.adopcion.service;
+
+import com.unidos.adopcion.config.JwtUtils;
+import com.unidos.adopcion.model.Rol;
+import com.unidos.adopcion.model.Usuario;
+import com.unidos.adopcion.repository.RolRepository;
+import com.unidos.adopcion.repository.UsuarioRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import java.util.Map;
+import java.util.Set;
+
+@Service
+<span class="fc" id="L18">public class AuthService {</span>
+
+    @Autowired private AuthenticationManager authManager;
+    @Autowired private JwtUtils jwtUtils;
+    @Autowired private UsuarioRepository usuarioRepo;
+    @Autowired private RolRepository rolRepo;
+    @Autowired private PasswordEncoder encoder;
+
+    public Map&lt;String, String&gt; login(String email, String password) {
+<span class="fc" id="L27">        Authentication auth = authManager.authenticate(</span>
+                new UsernamePasswordAuthenticationToken(email, password));
+<span class="fc" id="L29">        String token = jwtUtils.generarToken(auth);</span>
+<span class="fc" id="L30">        return Map.of(&quot;token&quot;, token, &quot;tipo&quot;, &quot;Bearer&quot;);</span>
+    }
+
+    public Usuario registrar(Usuario datos) {
+<span class="fc bfc" id="L34" title="All 2 branches covered.">        if (usuarioRepo.existsByEmail(datos.getEmail())) {</span>
+<span class="fc" id="L35">            throw new IllegalArgumentException(&quot;El email ya está registrado.&quot;);</span>
+        }
+<span class="fc" id="L37">        datos.setPassword(encoder.encode(datos.getPassword()));</span>
+<span class="fc" id="L38">        Rol rolUsuario = rolRepo.findByNombre(&quot;ROLE_USUARIO&quot;)</span>
+<span class="fc" id="L39">                .orElseThrow(() -&gt; new RuntimeException(&quot;Rol no encontrado&quot;));</span>
+<span class="fc" id="L40">        datos.setRoles(Set.of(rolUsuario));</span>
+<span class="fc" id="L41">        return usuarioRepo.save(datos);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

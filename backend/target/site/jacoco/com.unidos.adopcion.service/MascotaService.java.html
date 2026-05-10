@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MascotaService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Unidos por los Animales - Adopcion</a> &gt; <a href="index.source.html" class="el_package">com.unidos.adopcion.service</a> &gt; <span class="el_source">MascotaService.java</span></div><h1>MascotaService.java</h1><pre class="source lang-java linenums">package com.unidos.adopcion.service;
+
+import com.unidos.adopcion.model.Mascota;
+import com.unidos.adopcion.model.Mascota.EstadoMascota;
+import com.unidos.adopcion.model.Mascota.Especie;
+import com.unidos.adopcion.repository.MascotaRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+<span class="fc" id="L13">public class MascotaService {</span>
+
+    @Autowired
+    private MascotaRepository mascotaRepo;
+
+    public List&lt;Mascota&gt; listarDisponibles() {
+<span class="fc" id="L19">        return mascotaRepo.findByEstado(EstadoMascota.DISPONIBLE);</span>
+    }
+
+    public List&lt;Mascota&gt; listarPorEspecie(Especie especie) {
+<span class="fc" id="L23">        return mascotaRepo.findByEspecieAndEstado(especie, EstadoMascota.DISPONIBLE);</span>
+    }
+
+    public Mascota buscarPorId(Long id) {
+<span class="fc" id="L27">        return mascotaRepo.findById(id)</span>
+<span class="fc" id="L28">                .orElseThrow(() -&gt; new RuntimeException(&quot;Mascota no encontrada: &quot; + id));</span>
+    }
+
+    public Mascota guardar(Mascota mascota) {
+<span class="fc" id="L32">        return mascotaRepo.save(mascota);</span>
+    }
+
+    public Mascota actualizarEstado(Long id, EstadoMascota estado) {
+<span class="fc" id="L36">        Mascota m = buscarPorId(id);</span>
+<span class="fc" id="L37">        m.setEstado(estado);</span>
+<span class="fc" id="L38">        return mascotaRepo.save(m);</span>
+    }
+
+    public void eliminar(Long id) {
+<span class="fc" id="L42">        mascotaRepo.deleteById(id);</span>
+<span class="fc" id="L43">    }</span>
+
+    public List&lt;Mascota&gt; listarTodas() {
+<span class="fc" id="L46">        return mascotaRepo.findAll();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

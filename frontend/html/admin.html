@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administracion - Unidos por los Animales</title>
+    <link rel="stylesheet" href="../css/estilos.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="index.html" class="navbar-marca">Unidos por los Animales</a>
+    <ul class="navbar-nav">
+        <li><a href="index.html">Mascotas</a></li>
+        <li><a href="admin.html" class="activo">Administracion</a></li>
+        <li><a href="#" id="btn-logout">Salir</a></li>
+    </ul>
+</nav>
+
+<div class="contenedor">
+    <h1 class="seccion-titulo">Panel de administracion</h1>
+    <p class="seccion-subtitulo">Gestiona mascotas y solicitudes de adopcion.</p>
+
+    <div id="alertas"></div>
+
+    <!-- Pestanas -->
+    <div class="filtros mb-2">
+        <button class="filtro-btn activo" data-seccion="solicitudes">Solicitudes</button>
+        <button class="filtro-btn" data-seccion="mascotas">Mascotas</button>
+    </div>
+
+    <!-- Solicitudes -->
+    <div id="seccion-solicitudes">
+        <div class="flex gap-2" style="align-items:center;margin-bottom:1rem;flex-wrap:wrap">
+            <div style="flex:1">
+                <strong style="font-size:0.9rem">Filtrar por estado:</strong>
+            </div>
+            <select id="filtro-estado-sol" style="padding:5px 10px;border:1px solid var(--color-borde);border-radius:var(--radio);font-size:0.875rem">
+                <option value="">Todos</option>
+                <option value="PENDIENTE">Pendiente</option>
+                <option value="EN_REVISION">En revision</option>
+                <option value="APROBADA">Aprobada</option>
+                <option value="RECHAZADA">Rechazada</option>
+            </select>
+        </div>
+        <div id="lista-admin-solicitudes"></div>
+    </div>
+
+    <!-- Mascotas -->
+    <div id="seccion-mascotas" class="oculto">
+        <div class="texto-derecha mb-2">
+            <button class="btn btn-primario" id="btn-nueva-mascota">Agregar mascota</button>
+        </div>
+        <div id="lista-admin-mascotas"></div>
+    </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/ui.js"></script>
+<script>
+    if (!Api.estaAutenticado()) window.location.href = 'login.html';
+
+    // ---- Solicitudes ----
+    async function cargarSolicitudesAdmin(estado = '') {
+        const contenedor = document.getElementById('lista-admin-solicitudes');
+        UI.mostrarSpinner(contenedor);
+        try {
+            const solicitudes = await Api.getSolicitudes(estado || null);
+            if (!solicitudes.length) {
+                UI.vacio(contenedor, 'No hay solicitudes.');
+                return;
+            }
+
+            contenedor.innerHTML = `
+                <div class="tabla-contenedor">
+                    <table class="tabla">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Usuario</th>
+                                <th>Mascota</th>
+                                <th>Estado</th>
+                                <th>Fecha</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-sol-admin"></tbody>
+                    </table>
+                </div>`;
+
+            const tbody = document.getElementById('tbody-sol-admin');
+            solicitudes.forEach(s => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>#${s.id}</td>
+                    <td>${s.usuario.nombre} ${s.usuario.apellido}</td>
+                    <td>${s.mascota.nombre}</td>
+                    <td>${UI.badge(s.estado)}</td>
+                    <td>${UI.formatearFecha(s.fechaSolicitud)}</td>
+                    <td>
+                        <div class="flex gap-1">
+                            ${s.estado === 'PENDIENTE' || s.estado === 'EN_REVISION' ? `
+                            <button class="btn btn-primario" style="font-size:0.75rem;padding:3px 9px"
+                                onclick="cambiarEstadoSol(${s.id},'APROBADA')">Aprobar</button>
+                            <button class="btn btn-peligro" style="font-size:0.75rem;padding:3px 9px"
+                                onclick="cambiarEstadoSol(${s.id},'RECHAZADA')">Rechazar</button>
+                            <button class="btn btn-secundario" style="font-size:0.75rem;padding:3px 9px"
+                                onclick="cambiarEstadoSol(${s.id},'EN_REVISION')">En revision</button>
+                            ` : '-'}
+                        </div>
+                    </td>`;
+                tbody.appendChild(tr);
+            });
+        } catch (e) {
+            UI.alerta(document.getElementById('alertas'), 'error', e.message);
+        }
+    }
+
+    async function cambiarEstadoSol(id, estado) {
+        try {
+            await Api.cambiarEstadoSolicitud(id, estado);
+            UI.alerta(document.getElementById('alertas'), 'exito', 'Estado actualizado.');
+            cargarSolicitudesAdmin(document.getElementById('filtro-estado-sol').value);
+        } catch (e) {
+            UI.alerta(document.getElementById('alertas'), 'error', e.message);
+        }
+    }
+
+    document.getElementById('filtro-estado-sol').addEventListener('change', e => {
+        cargarSolicitudesAdmin(e.target.value);
+    });
+
+    // ---- Mascotas ----
+    async function cargarMascotasAdmin() {
+        const contenedor = document.getElementById('lista-admin-mascotas');
+        UI.mostrarSpinner(contenedor);
+        try {
+            const mascotas = await Api.getMascotas();
+            if (!mascotas.length) {
+                UI.vacio(contenedor, 'No hay mascotas registradas.');
+                return;
+            }
+
+            contenedor.innerHTML = `
+                <div class="tabla-contenedor">
+                    <table class="tabla">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Especie</th>
+                                <th>Raza</th>
+                                <th>Edad</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-mascotas-admin"></tbody>
+                    </table>
+                </div>`;
+
+            const tbody = document.getElementById('tbody-mascotas-admin');
+            mascotas.forEach(m => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${m.nombre}</strong></td>
+                    <td>${m.especie}</td>
+                    <td>${m.raza || '-'}</td>
+                    <td>${UI.formatearEdad(m.edadMeses)}</td>
+                    <td>${UI.badge(m.estado)}</td>`;
+                tbody.appendChild(tr);
+            });
+        } catch (e) {
+            UI.alerta(document.getElementById('alertas'), 'error', e.message);
+        }
+    }
+
+    document.getElementById('btn-nueva-mascota').addEventListener('click', () => {
+        const html = `
+            <p class="modal-titulo">Agregar mascota</p>
+            <div id="alerta-mascota"></div>
+            <div class="campo">
+                <label>Nombre</label>
+                <input type="text" id="m-nombre">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+                <div class="campo">
+                    <label>Especie</label>
+                    <select id="m-especie">
+                        <option value="PERRO">Perro</option>
+                        <option value="GATO">Gato</option>
+                        <option value="OTRO">Otro</option>
+                    </select>
+                </div>
+                <div class="campo">
+                    <label>Genero</label>
+                    <select id="m-genero">
+                        <option value="MACHO">Macho</option>
+                        <option value="HEMBRA">Hembra</option>
+                    </select>
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+                <div class="campo">
+                    <label>Raza</label>
+                    <input type="text" id="m-raza" placeholder="Mestizo">
+                </div>
+                <div class="campo">
+                    <label>Edad (meses)</label>
+                    <input type="number" id="m-edad" min="0" value="0">
+                </div>
+            </div>
+            <div class="campo">
+                <label>Descripcion</label>
+                <textarea id="m-descripcion" rows="3"></textarea>
+            </div>
+            <div class="modal-acciones">
+                <button class="btn btn-secundario" onclick="UI.cerrarModales()">Cancelar</button>
+                <button class="btn btn-primario" id="btn-guardar-mascota">Guardar</button>
+            </div>`;
+
+        UI.abrirModal(html);
+
+        document.getElementById('btn-guardar-mascota').addEventListener('click', async () => {
+            const nombre = document.getElementById('m-nombre').value.trim();
+            if (!nombre) {
+                UI.alerta(document.getElementById('alerta-mascota'), 'error', 'El nombre es requerido.');
+                return;
+            }
+            // Aqui se llamaria a Api.crearMascota (endpoint POST /mascotas)
+            // Requiere rol ADMIN o COORDINADOR en el JWT
+            UI.alerta(document.getElementById('alerta-mascota'), 'info',
+                'Funcionalidad disponible para usuarios con rol COORDINADOR o ADMIN.');
+        });
+    });
+
+    // ---- Pestanas ----
+    document.querySelectorAll('[data-seccion]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('[data-seccion]').forEach(b => b.classList.remove('activo'));
+            btn.classList.add('activo');
+            const seccion = btn.dataset.seccion;
+            document.getElementById('seccion-solicitudes').classList.toggle('oculto', seccion !== 'solicitudes');
+            document.getElementById('seccion-mascotas').classList.toggle('oculto', seccion !== 'mascotas');
+            if (seccion === 'mascotas') cargarMascotasAdmin();
+        });
+    });
+
+    document.getElementById('btn-logout').addEventListener('click', e => {
+        e.preventDefault();
+        Api.logout();
+    });
+
+    cargarSolicitudesAdmin();
+</script>
+</body>
+</html>

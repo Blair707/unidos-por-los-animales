@@ -1,0 +1,19 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+Unidos por los Animales - Adopcion,com.unidos.adopcion,AdopcionApplication,5,3,0,0,2,1,1,1,1,1
+Unidos por los Animales - Adopcion,com.unidos.adopcion.model,Mascota.Especie,0,21,0,0,0,1,0,1,0,1
+Unidos por los Animales - Adopcion,com.unidos.adopcion.model,SolicitudAdopcion,4,0,0,0,2,0,1,0,1,0
+Unidos por los Animales - Adopcion,com.unidos.adopcion.model,Mascota.Genero,0,15,0,0,0,1,0,1,0,1
+Unidos por los Animales - Adopcion,com.unidos.adopcion.model,SolicitudAdopcion.EstadoSolicitud,0,27,0,0,0,1,0,1,0,1
+Unidos por los Animales - Adopcion,com.unidos.adopcion.model,Mascota.EstadoMascota,0,21,0,0,0,1,0,1,0,1
+Unidos por los Animales - Adopcion,com.unidos.adopcion.service,AuthService,0,64,0,2,0,11,0,5,0,4
+Unidos por los Animales - Adopcion,com.unidos.adopcion.service,SolicitudService,10,108,0,6,0,25,2,10,2,7
+Unidos por los Animales - Adopcion,com.unidos.adopcion.service,MensajeService,10,78,1,1,1,18,1,8,0,8
+Unidos por los Animales - Adopcion,com.unidos.adopcion.service,MascotaService,0,57,0,0,0,12,0,9,0,9
+Unidos por los Animales - Adopcion,com.unidos.adopcion.service,UsuarioDetailsService,49,0,2,0,11,0,5,0,4,0
+Unidos por los Animales - Adopcion,com.unidos.adopcion.controller,MensajeController,53,0,0,0,8,0,6,0,6,0
+Unidos por los Animales - Adopcion,com.unidos.adopcion.controller,MascotaController,12,37,0,2,3,8,2,7,2,6
+Unidos por los Animales - Adopcion,com.unidos.adopcion.controller,AuthController,0,43,0,0,0,12,0,3,0,3
+Unidos por los Animales - Adopcion,com.unidos.adopcion.controller,SolicitudController,71,0,2,0,15,0,6,0,5,0
+Unidos por los Animales - Adopcion,com.unidos.adopcion.config,SecurityConfig,156,0,0,0,28,0,10,0,10,0
+Unidos por los Animales - Adopcion,com.unidos.adopcion.config,JwtAuthFilter,64,0,8,0,15,0,7,0,3,0
+Unidos por los Animales - Adopcion,com.unidos.adopcion.config,JwtUtils,0,60,0,0,0,22,0,5,0,5

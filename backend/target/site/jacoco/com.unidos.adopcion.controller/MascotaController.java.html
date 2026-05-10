@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MascotaController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Unidos por los Animales - Adopcion</a> &gt; <a href="index.source.html" class="el_package">com.unidos.adopcion.controller</a> &gt; <span class="el_source">MascotaController.java</span></div><h1>MascotaController.java</h1><pre class="source lang-java linenums">package com.unidos.adopcion.controller;
+
+import com.unidos.adopcion.model.Mascota;
+import com.unidos.adopcion.model.Mascota.Especie;
+import com.unidos.adopcion.model.Mascota.EstadoMascota;
+import com.unidos.adopcion.service.MascotaService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping(&quot;/api/mascotas&quot;)
+<span class="fc" id="L16">public class MascotaController {</span>
+
+    @Autowired
+    private MascotaService mascotaService;
+
+    /** Público: listar mascotas disponibles */
+    @GetMapping
+    public List&lt;Mascota&gt; listar(@RequestParam(required = false) Especie especie) {
+<span class="fc bfc" id="L24" title="All 2 branches covered.">        if (especie != null) return mascotaService.listarPorEspecie(especie);</span>
+<span class="fc" id="L25">        return mascotaService.listarDisponibles();</span>
+    }
+
+    /** Público: detalle de mascota */
+    @GetMapping(&quot;/{id}&quot;)
+    public Mascota detalle(@PathVariable Long id) {
+<span class="fc" id="L31">        return mascotaService.buscarPorId(id);</span>
+    }
+
+    /** Admin/Coordinador: listar todas */
+    @GetMapping(&quot;/admin/todas&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN','COORDINADOR')&quot;)
+    public List&lt;Mascota&gt; todas() {
+<span class="nc" id="L38">        return mascotaService.listarTodas();</span>
+    }
+
+    /** Admin/Coordinador: crear */
+    @PostMapping
+    @PreAuthorize(&quot;hasAnyRole('ADMIN','COORDINADOR')&quot;)
+    public Mascota crear(@RequestBody Mascota mascota) {
+<span class="fc" id="L45">        return mascotaService.guardar(mascota);</span>
+    }
+
+    /** Admin/Coordinador: actualizar */
+    @PutMapping(&quot;/{id}&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN','COORDINADOR')&quot;)
+    public Mascota actualizar(@PathVariable Long id, @RequestBody Mascota datos) {
+<span class="nc" id="L52">        datos.setId(id);</span>
+<span class="nc" id="L53">        return mascotaService.guardar(datos);</span>
+    }
+
+    /** Admin/Coordinador: cambiar estado */
+    @PatchMapping(&quot;/{id}/estado&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN','COORDINADOR')&quot;)
+    public Mascota cambiarEstado(@PathVariable Long id, @RequestParam EstadoMascota estado) {
+<span class="fc" id="L60">        return mascotaService.actualizarEstado(id, estado);</span>
+    }
+
+    /** Admin: eliminar */
+    @DeleteMapping(&quot;/{id}&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    public ResponseEntity&lt;Void&gt; eliminar(@PathVariable Long id) {
+<span class="fc" id="L67">        mascotaService.eliminar(id);</span>
+<span class="fc" id="L68">        return ResponseEntity.noContent().build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MensajeService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Unidos por los Animales - Adopcion</a> &gt; <a href="index.source.html" class="el_package">com.unidos.adopcion.service</a> &gt; <span class="el_source">MensajeService.java</span></div><h1>MensajeService.java</h1><pre class="source lang-java linenums">package com.unidos.adopcion.service;
+
+import com.unidos.adopcion.model.*;
+import com.unidos.adopcion.repository.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+<span class="fc" id="L11">public class MensajeService {</span>
+
+    @Autowired private MensajeRepository mensajeRepo;
+    @Autowired private UsuarioRepository usuarioRepo;
+    @Autowired private SolicitudAdopcionRepository solicitudRepo;
+
+    public Mensaje enviar(Long remitenteId, Long destinatarioId,
+                          Long solicitudId, String asunto, String contenido) {
+<span class="fc" id="L19">        Usuario remitente    = usuarioRepo.findById(remitenteId)</span>
+<span class="fc" id="L20">                .orElseThrow(() -&gt; new RuntimeException(&quot;Remitente no encontrado&quot;));</span>
+<span class="fc" id="L21">        Usuario destinatario = usuarioRepo.findById(destinatarioId)</span>
+<span class="fc" id="L22">                .orElseThrow(() -&gt; new RuntimeException(&quot;Destinatario no encontrado&quot;));</span>
+
+<span class="fc" id="L24">        Mensaje msg = Mensaje.builder()</span>
+<span class="fc" id="L25">                .remitente(remitente)</span>
+<span class="fc" id="L26">                .destinatario(destinatario)</span>
+<span class="fc" id="L27">                .asunto(asunto)</span>
+<span class="fc" id="L28">                .contenido(contenido)</span>
+<span class="fc" id="L29">                .build();</span>
+
+<span class="pc bpc" id="L31" title="1 of 2 branches missed.">        if (solicitudId != null) {</span>
+<span class="nc" id="L32">            solicitudRepo.findById(solicitudId).ifPresent(msg::setSolicitud);</span>
+        }
+<span class="fc" id="L34">        return mensajeRepo.save(msg);</span>
+    }
+
+    public List&lt;Mensaje&gt; bandejaSalida(Long usuarioId) {
+<span class="fc" id="L38">        return mensajeRepo.findByRemitenteIdOrderByFechaEnvioDesc(usuarioId);</span>
+    }
+
+    public List&lt;Mensaje&gt; bandejaEntrada(Long usuarioId) {
+<span class="fc" id="L42">        List&lt;Mensaje&gt; mensajes = mensajeRepo.findByDestinatarioIdOrderByFechaEnvioDesc(usuarioId);</span>
+<span class="fc" id="L43">        mensajes.forEach(m -&gt; { m.setLeido(true); mensajeRepo.save(m); });</span>
+<span class="fc" id="L44">        return mensajes;</span>
+    }
+
+    public long contarNoLeidos(Long usuarioId) {
+<span class="fc" id="L48">        return mensajeRepo.countByDestinatarioIdAndLeidoFalse(usuarioId);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,7 @@
+com\unidos\adopcion\service\AuthServiceTest.class
+com\unidos\adopcion\service\MascotaServiceTest.class
+com\unidos\adopcion\controller\MascotaControllerTest.class
+com\unidos\adopcion\service\SolicitudServiceTest.class
+com\unidos\adopcion\service\MensajeServiceTest.class
+com\unidos\adopcion\config\JwtUtilsTest.class
+com\unidos\adopcion\controller\AuthControllerTest.class

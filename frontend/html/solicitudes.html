@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Solicitudes - Unidos por los Animales</title>
+    <link rel="stylesheet" href="../css/estilos.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="index.html" class="navbar-marca">Unidos por los Animales</a>
+    <ul class="navbar-nav">
+        <li><a href="index.html">Mascotas</a></li>
+        <li><a href="solicitudes.html" class="activo">Mis solicitudes</a></li>
+        <li><a href="mensajes.html">Mensajes</a></li>
+        <li><a href="#" id="btn-logout">Salir</a></li>
+    </ul>
+</nav>
+
+<div class="contenedor">
+    <h1 class="seccion-titulo">Mis solicitudes</h1>
+    <p class="seccion-subtitulo">Estado de tus solicitudes de adopcion.</p>
+
+    <div id="alertas"></div>
+    <div id="lista-solicitudes"></div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/ui.js"></script>
+<script>
+    if (!Api.estaAutenticado()) window.location.href = 'login.html';
+
+    async function cargarSolicitudes() {
+        const contenedor = document.getElementById('lista-solicitudes');
+        UI.mostrarSpinner(contenedor);
+        try {
+            const solicitudes = await Api.getMisSolicitudes();
+            if (!solicitudes.length) {
+                UI.vacio(contenedor, 'No tienes solicitudes de adopcion. Busca una mascota y envia tu solicitud.');
+                return;
+            }
+
+            contenedor.innerHTML = `
+                <div class="tabla-contenedor">
+                    <table class="tabla">
+                        <thead>
+                            <tr>
+                                <th>Mascota</th>
+                                <th>Especie</th>
+                                <th>Estado</th>
+                                <th>Fecha</th>
+                                <th>Detalle</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-solicitudes"></tbody>
+                    </table>
+                </div>`;
+
+            const tbody = document.getElementById('tbody-solicitudes');
+            solicitudes.forEach(s => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${s.mascota.nombre}</strong></td>
+                    <td>${s.mascota.especie}</td>
+                    <td>${UI.badge(s.estado)}</td>
+                    <td>${UI.formatearFecha(s.fechaSolicitud)}</td>
+                    <td>
+                        <button class="btn btn-secundario" style="font-size:0.8rem;padding:4px 10px"
+                            onclick="verDetalle(${JSON.stringify(s).replace(/"/g,'&quot;')})">
+                            Ver
+                        </button>
+                    </td>`;
+                tbody.appendChild(tr);
+            });
+        } catch (e) {
+            UI.alerta(document.getElementById('alertas'), 'error', e.message);
+        }
+    }
+
+    function verDetalle(s) {
+        const html = `
+            <p class="modal-titulo">Solicitud para ${s.mascota.nombre}</p>
+            <div class="panel" style="margin-bottom:0">
+                <p class="mb-1"><strong>Estado:</strong> ${UI.badge(s.estado)}</p>
+                <p class="mb-1"><strong>Fecha:</strong> ${UI.formatearFecha(s.fechaSolicitud)}</p>
+                <p class="mb-1"><strong>Motivo:</strong></p>
+                <p class="texto-suave">${s.motivo}</p>
+                ${s.descripcionHogar ? `<p class="mb-1 mt-1"><strong>Descripcion del hogar:</strong></p>
+                <p class="texto-suave">${s.descripcionHogar}</p>` : ''}
+                <p class="mt-1 texto-suave">
+                    Patio: ${s.tienePatio ? 'Si' : 'No'} &nbsp;&middot;&nbsp;
+                    Otras mascotas: ${s.tieneOtrasMascotas ? 'Si' : 'No'}
+                </p>
+            </div>
+            <div class="modal-acciones">
+                <button class="btn btn-secundario" onclick="UI.cerrarModales()">Cerrar</button>
+            </div>`;
+        UI.abrirModal(html);
+    }
+
+    document.getElementById('btn-logout').addEventListener('click', e => {
+        e.preventDefault();
+        Api.logout();
+    });
+
+    cargarSolicitudes();
+</script>
+</body>
+</html>

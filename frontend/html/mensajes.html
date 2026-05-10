@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mensajes - Unidos por los Animales</title>
+    <link rel="stylesheet" href="../css/estilos.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="index.html" class="navbar-marca">Unidos por los Animales</a>
+    <ul class="navbar-nav">
+        <li><a href="index.html">Mascotas</a></li>
+        <li><a href="solicitudes.html">Mis solicitudes</a></li>
+        <li><a href="mensajes.html" class="activo">Mensajes</a></li>
+        <li><a href="#" id="btn-logout">Salir</a></li>
+    </ul>
+</nav>
+
+<div class="contenedor">
+    <div class="flex gap-2" style="align-items:center;margin-bottom:1.5rem;flex-wrap:wrap">
+        <div style="flex:1">
+            <h1 class="seccion-titulo" style="margin-bottom:0">Mensajes</h1>
+        </div>
+        <button class="btn btn-primario" id="btn-nuevo-mensaje">Nuevo mensaje</button>
+    </div>
+
+    <div id="alertas"></div>
+
+    <!-- Pestanas -->
+    <div class="filtros mb-2">
+        <button class="filtro-btn activo" data-bandeja="entrada">Entrada</button>
+        <button class="filtro-btn" data-bandeja="salida">Enviados</button>
+    </div>
+
+    <div id="lista-mensajes"></div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/ui.js"></script>
+<script>
+    if (!Api.estaAutenticado()) window.location.href = 'login.html';
+
+    let bandejaActual = 'entrada';
+
+    async function cargarMensajes() {
+        const contenedor = document.getElementById('lista-mensajes');
+        UI.mostrarSpinner(contenedor);
+        try {
+            const mensajes = bandejaActual === 'entrada'
+                ? await Api.getBandejaEntrada()
+                : await Api.getBandejaSalida();
+
+            if (!mensajes.length) {
+                UI.vacio(contenedor, 'No hay mensajes.');
+                return;
+            }
+
+            contenedor.innerHTML = '<div class="mensaje-lista" id="msgs"></div>';
+            const lista = document.getElementById('msgs');
+            mensajes.forEach(m => {
+                const div = document.createElement('div');
+                div.className = 'mensaje-item' + (!m.leido && bandejaActual === 'entrada' ? ' mensaje-item--no-leido' : '');
+                const contraparte = bandejaActual === 'entrada'
+                    ? `De: ${m.remitente.nombre} ${m.remitente.apellido}`
+                    : `Para: ${m.destinatario.nombre} ${m.destinatario.apellido}`;
+                div.innerHTML = `
+                    <p class="mensaje-item__asunto">${m.asunto || '(Sin asunto)'}</p>
+                    <p class="mensaje-item__meta">${contraparte} &middot; ${UI.formatearFecha(m.fechaEnvio)}</p>`;
+                div.addEventListener('click', () => verMensaje(m));
+                lista.appendChild(div);
+            });
+        } catch (e) {
+            UI.alerta(document.getElementById('alertas'), 'error', e.message);
+        }
+    }
+
+    function verMensaje(m) {
+        const contraparte = bandejaActual === 'entrada'
+            ? `De: ${m.remitente.nombre} ${m.remitente.apellido} &lt;${m.remitente.email}&gt;`
+            : `Para: ${m.destinatario.nombre} ${m.destinatario.apellido}`;
+        const html = `
+            <p class="modal-titulo">${m.asunto || '(Sin asunto)'}</p>
+            <p class="texto-suave mb-1">${contraparte}</p>
+            <p class="texto-suave mb-2">${UI.formatearFecha(m.fechaEnvio)}</p>
+            <div style="border-top:1px solid var(--color-borde);padding-top:1rem;font-size:0.9rem;line-height:1.7">
+                ${m.contenido.replace(/\n/g, '<br>')}
+            </div>
+            <div class="modal-acciones">
+                <button class="btn btn-secundario" onclick="UI.cerrarModales()">Cerrar</button>
+            </div>`;
+        UI.abrirModal(html);
+    }
+
+    function abrirNuevoMensaje() {
+        const html = `
+            <p class="modal-titulo">Nuevo mensaje</p>
+            <div id="alerta-mensaje"></div>
+            <div class="campo">
+                <label for="dest-id">ID del destinatario</label>
+                <input type="number" id="dest-id" placeholder="Numero de ID del usuario">
+            </div>
+            <div class="campo">
+                <label for="asunto-msg">Asunto</label>
+                <input type="text" id="asunto-msg" placeholder="Asunto del mensaje">
+            </div>
+            <div class="campo">
+                <label for="contenido-msg">Mensaje</label>
+                <textarea id="contenido-msg" rows="5" placeholder="Escribe tu mensaje..."></textarea>
+            </div>
+            <div class="modal-acciones">
+                <button class="btn btn-secundario" onclick="UI.cerrarModales()">Cancelar</button>
+                <button class="btn btn-primario" id="btn-enviar-msg">Enviar</button>
+            </div>`;
+
+        UI.abrirModal(html);
+
+        document.getElementById('btn-enviar-msg').addEventListener('click', async () => {
+            const destId    = parseInt(document.getElementById('dest-id').value);
+            const asunto    = document.getElementById('asunto-msg').value.trim();
+            const contenido = document.getElementById('contenido-msg').value.trim();
+
+            if (!destId || !contenido) {
+                UI.alerta(document.getElementById('alerta-mensaje'), 'error', 'Completa destinatario y mensaje.');
+                return;
+            }
+            try {
+                await Api.enviarMensaje({ destinatarioId: destId, asunto, contenido });
+                UI.cerrarModales();
+                UI.alerta(document.getElementById('alertas'), 'exito', 'Mensaje enviado.');
+                cargarMensajes();
+            } catch (e) {
+                UI.alerta(document.getElementById('alerta-mensaje'), 'error', e.message);
+            }
+        });
+    }
+
+    // Pestanas
+    document.querySelectorAll('[data-bandeja]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('[data-bandeja]').forEach(b => b.classList.remove('activo'));
+            btn.classList.add('activo');
+            bandejaActual = btn.dataset.bandeja;
+            cargarMensajes();
+        });
+    });
+
+    document.getElementById('btn-nuevo-mensaje').addEventListener('click', abrirNuevoMensaje);
+    document.getElementById('btn-logout').addEventListener('click', e => {
+        e.preventDefault();
+        Api.logout();
+    });
+
+    cargarMensajes();
+</script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - Unidos por los Animales</title>
+    <link rel="stylesheet" href="../css/estilos.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="index.html" class="navbar-marca">Unidos por los Animales</a>
+    <ul class="navbar-nav">
+        <li><a href="index.html">Mascotas</a></li>
+        <li><a href="login.html">Ingresar</a></li>
+    </ul>
+</nav>
+
+<div class="contenedor">
+    <div style="max-width:520px;margin:3rem auto">
+        <h1 class="seccion-titulo">Crear cuenta</h1>
+        <p class="seccion-subtitulo">Registrate para comenzar el proceso de adopcion.</p>
+
+        <div id="alertas"></div>
+
+        <div class="formulario">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+                <div class="campo">
+                    <label for="nombre">Nombre</label>
+                    <input type="text" id="nombre" placeholder="Juan">
+                </div>
+                <div class="campo">
+                    <label for="apellido">Apellido</label>
+                    <input type="text" id="apellido" placeholder="Perez">
+                </div>
+            </div>
+            <div class="campo">
+                <label for="email">Correo electronico</label>
+                <input type="email" id="email" placeholder="correo@ejemplo.cl">
+            </div>
+            <div class="campo">
+                <label for="password">Contrasena</label>
+                <input type="password" id="password" placeholder="Minimo 8 caracteres">
+            </div>
+            <div class="campo">
+                <label for="telefono">Telefono (opcional)</label>
+                <input type="tel" id="telefono" placeholder="+56 9 1234 5678">
+            </div>
+            <div class="campo">
+                <label for="direccion">Direccion (opcional)</label>
+                <input type="text" id="direccion" placeholder="Calle 123, Ciudad">
+            </div>
+            <button class="btn btn-primario btn-bloque mt-1" id="btn-registro">Crear cuenta</button>
+        </div>
+
+        <p class="texto-suave mt-2" style="text-align:center">
+            ¿Ya tienes cuenta? <a href="login.html">Ingresa aqui</a>
+        </p>
+    </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/ui.js"></script>
+<script>
+    document.getElementById('btn-registro').addEventListener('click', async () => {
+        const alertas = document.getElementById('alertas');
+        const nombre   = document.getElementById('nombre').value.trim();
+        const apellido = document.getElementById('apellido').value.trim();
+        const email    = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+
+        if (!nombre || !apellido || !email || !password) {
+            UI.alerta(alertas, 'error', 'Completa los campos obligatorios.');
+            return;
+        }
+        if (password.length < 8) {
+            UI.alerta(alertas, 'error', 'La contrasena debe tener al menos 8 caracteres.');
+            return;
+        }
+        try {
+            await Api.registro({
+                nombre,
+                apellido,
+                email,
+                password,
+                telefono:  document.getElementById('telefono').value.trim() || null,
+                direccion: document.getElementById('direccion').value.trim() || null
+            });
+            UI.alerta(alertas, 'exito', 'Cuenta creada. Redirigiendo...');
+            setTimeout(() => window.location.href = 'login.html', 1500);
+        } catch (e) {
+            UI.alerta(alertas, 'error', e.message);
+        }
+    });
+</script>
+</body>
+</html>

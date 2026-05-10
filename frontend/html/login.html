@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ingresar - Unidos por los Animales</title>
+    <link rel="stylesheet" href="../css/estilos.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="index.html" class="navbar-marca">Unidos por los Animales</a>
+    <ul class="navbar-nav">
+        <li><a href="index.html">Mascotas</a></li>
+        <li><a href="login.html" class="activo btn-nav">Ingresar</a></li>
+    </ul>
+</nav>
+
+<div class="contenedor">
+    <div style="max-width:480px;margin:3rem auto">
+        <h1 class="seccion-titulo">Ingresar</h1>
+        <p class="seccion-subtitulo">Accede a tu cuenta para gestionar solicitudes de adopcion.</p>
+
+        <div id="alertas"></div>
+
+        <div class="formulario">
+            <div class="campo">
+                <label for="email">Correo electronico</label>
+                <input type="email" id="email" placeholder="correo@ejemplo.cl">
+            </div>
+            <div class="campo">
+                <label for="password">Contrasena</label>
+                <input type="password" id="password" placeholder="Tu contrasena">
+            </div>
+            <button class="btn btn-primario btn-bloque mt-1" id="btn-login">Ingresar</button>
+        </div>
+
+        <p class="texto-suave mt-2" style="text-align:center">
+            ¿No tienes cuenta? <a href="registro.html">Regístrate aqui</a>
+        </p>
+    </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/ui.js"></script>
+<script>
+    if (Api.estaAutenticado()) window.location.href = 'index.html';
+
+    document.getElementById('btn-login').addEventListener('click', async () => {
+        const email    = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const alertas  = document.getElementById('alertas');
+
+        if (!email || !password) {
+            UI.alerta(alertas, 'error', 'Completa todos los campos.');
+            return;
+        }
+        try {
+            await Api.login(email, password);
+            window.location.href = 'index.html';
+        } catch (e) {
+            UI.alerta(alertas, 'error', 'Credenciales incorrectas. Verifica tu correo y contraseña.');
+        }
+    });
+
+    // Enter para enviar
+    document.getElementById('password').addEventListener('keydown', e => {
+        if (e.key === 'Enter') document.getElementById('btn-login').click();
+    });
+</script>
+</body>
+</html>

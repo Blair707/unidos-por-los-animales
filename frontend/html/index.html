@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unidos por los Animales - Adopción</title>
+    <link rel="stylesheet" href="../css/estilos.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="index.html" class="navbar-marca">Unidos por los Animales</a>
+    <ul class="navbar-nav">
+        <li><a href="index.html" class="activo">Mascotas</a></li>
+        <li id="nav-usuario" class="oculto">
+            <a href="solicitudes.html">Mis solicitudes</a>
+        </li>
+        <li id="nav-usuario" class="oculto">
+            <a href="mensajes.html">Mensajes</a>
+        </li>
+        <li id="nav-login">
+            <a href="login.html" class="btn-nav">Ingresar</a>
+        </li>
+        <li id="nav-logout" class="oculto">
+            <a href="#" id="btn-logout">Salir</a>
+        </li>
+    </ul>
+</nav>
+
+<div class="contenedor">
+    <h1 class="seccion-titulo">Mascotas en adopción</h1>
+    <p class="seccion-subtitulo">Encuentra a tu nuevo compañero y comienza el proceso de adopción.</p>
+
+    <div class="filtros" id="filtros">
+        <button class="filtro-btn activo" data-especie="">Todos</button>
+        <button class="filtro-btn" data-especie="PERRO">Perros</button>
+        <button class="filtro-btn" data-especie="GATO">Gatos</button>
+        <button class="filtro-btn" data-especie="OTRO">Otros</button>
+    </div>
+
+    <div id="lista-mascotas">
+        <div class="flex-centrado" style="padding:3rem">
+            <div class="spinner"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Detalle mascota y solicitud -->
+<script src="../js/api.js"></script>
+<script src="../js/ui.js"></script>
+<script>
+    let especieFiltro = '';
+
+    async function cargarMascotas() {
+        const contenedor = document.getElementById('lista-mascotas');
+        UI.mostrarSpinner(contenedor);
+        try {
+            const mascotas = await Api.getMascotas(especieFiltro || null);
+            if (!mascotas.length) {
+                UI.vacio(contenedor, 'No hay mascotas disponibles con ese filtro.');
+                return;
+            }
+            contenedor.innerHTML = '<div class="grilla-mascotas" id="grilla"></div>';
+            const grilla = document.getElementById('grilla');
+            mascotas.forEach(m => {
+                const card = document.createElement('div');
+                card.className = 'tarjeta-mascota';
+                card.innerHTML = `
+                    ${m.imagenUrl
+                        ? `<img class="tarjeta-mascota__imagen" src="${m.imagenUrl}" alt="${m.nombre}">`
+                        : `<div class="tarjeta-mascota__imagen-placeholder">Sin imagen</div>`}
+                    <div class="tarjeta-mascota__cuerpo">
+                        <p class="tarjeta-mascota__nombre">${m.nombre}</p>
+                        <p class="tarjeta-mascota__meta">
+                            ${m.especie} ${m.raza ? '&middot; ' + m.raza : ''} &middot; ${UI.formatearEdad(m.edadMeses)} &middot; ${m.genero}
+                        </p>
+                        <p class="tarjeta-mascota__descripcion">${m.descripcion || ''}</p>
+                        ${UI.badge(m.estado)}
+                    </div>`;
+                card.addEventListener('click', () => abrirDetalle(m.id));
+                grilla.appendChild(card);
+            });
+        } catch (e) {
+            UI.alerta(document.querySelector('.contenedor'), 'error', e.message);
+        }
+    }
+
+    async function abrirDetalle(id) {
+        try {
+            const m = await Api.getMascota(id);
+            const puedeAdoptar = Api.estaAutenticado() && m.estado === 'DISPONIBLE';
+
+            const html = `
+                <p class="modal-titulo">${m.nombre}</p>
+                <div class="detalle-mascota">
+                    ${m.imagenUrl
+                        ? `<img class="detalle-mascota__imagen" src="${m.imagenUrl}" alt="${m.nombre}">`
+                        : `<div class="detalle-mascota__placeholder">Sin imagen</div>`}
+                    <div>
+                        <div class="detalle-mascota__ficha">
+                            <div class="ficha-item">
+                                <span class="ficha-item__etiqueta">Especie:</span>
+                                <span>${m.especie}</span>
+                            </div>
+                            <div class="ficha-item">
+                                <span class="ficha-item__etiqueta">Raza:</span>
+                                <span>${m.raza || 'Mestizo'}</span>
+                            </div>
+                            <div class="ficha-item">
+                                <span class="ficha-item__etiqueta">Edad:</span>
+                                <span>${UI.formatearEdad(m.edadMeses)}</span>
+                            </div>
+                            <div class="ficha-item">
+                                <span class="ficha-item__etiqueta">Genero:</span>
+                                <span>${m.genero}</span>
+                            </div>
+                        </div>
+                        <p style="font-size:0.9rem;margin-bottom:1rem">${m.descripcion || ''}</p>
+                        ${UI.badge(m.estado)}
+                        ${puedeAdoptar
+                            ? `<div class="mt-2"><button class="btn btn-primario" id="btn-solicitar-${m.id}">Solicitar adopcion</button></div>`
+                            : !Api.estaAutenticado() && m.estado === 'DISPONIBLE'
+                                ? `<div class="mt-2 texto-suave">Para solicitar la adopcion, <a href="login.html">ingresa a tu cuenta</a>.</div>`
+                                : ''}
+                    </div>
+                </div>
+                <div class="modal-acciones">
+                    <button class="btn btn-secundario" onclick="UI.cerrarModales()">Cerrar</button>
+                </div>`;
+
+            const overlay = UI.abrirModal(html);
+
+            if (puedeAdoptar) {
+                document.getElementById(`btn-solicitar-${m.id}`)
+                    .addEventListener('click', () => {
+                        UI.cerrarModales();
+                        abrirFormSolicitud(m);
+                    });
+            }
+        } catch (e) {
+            UI.alerta(document.querySelector('.contenedor'), 'error', e.message);
+        }
+    }
+
+    function abrirFormSolicitud(mascota) {
+        const html = `
+            <p class="modal-titulo">Solicitar adopcion de ${mascota.nombre}</p>
+            <div id="alerta-solicitud"></div>
+            <div class="campo">
+                <label for="motivo">Por que quieres adoptar a ${mascota.nombre}?</label>
+                <textarea id="motivo" rows="3" placeholder="Cuéntanos sobre ti y tu motivacion..."></textarea>
+            </div>
+            <div class="campo">
+                <label for="descripcion-hogar">Descripcion de tu hogar</label>
+                <textarea id="descripcion-hogar" rows="2" placeholder="Tipo de vivienda, espacio disponible..."></textarea>
+            </div>
+            <div class="campo-checkbox">
+                <input type="checkbox" id="tiene-patio">
+                <label for="tiene-patio">Tengo patio o area exterior</label>
+            </div>
+            <div class="campo-checkbox">
+                <input type="checkbox" id="tiene-otras-mascotas">
+                <label for="tiene-otras-mascotas">Tengo otras mascotas en casa</label>
+            </div>
+            <div class="modal-acciones">
+                <button class="btn btn-secundario" onclick="UI.cerrarModales()">Cancelar</button>
+                <button class="btn btn-primario" id="btn-enviar-solicitud">Enviar solicitud</button>
+            </div>`;
+
+        const overlay = UI.abrirModal(html);
+
+        document.getElementById('btn-enviar-solicitud')
+            .addEventListener('click', async () => {
+                const motivo = document.getElementById('motivo').value.trim();
+                if (!motivo) {
+                    UI.alerta(document.getElementById('alerta-solicitud'), 'error', 'Debes indicar tu motivo.');
+                    return;
+                }
+                try {
+                    await Api.crearSolicitud({
+                        mascotaId:           mascota.id,
+                        motivo,
+                        descripcionHogar:    document.getElementById('descripcion-hogar').value,
+                        tienePatio:          document.getElementById('tiene-patio').checked,
+                        tieneOtrasMascotas:  document.getElementById('tiene-otras-mascotas').checked
+                    });
+                    UI.cerrarModales();
+                    UI.alerta(document.querySelector('.contenedor'), 'exito',
+                        'Solicitud enviada. Nos pondremos en contacto contigo.');
+                    cargarMascotas();
+                } catch (e) {
+                    UI.alerta(document.getElementById('alerta-solicitud'), 'error', e.message);
+                }
+            });
+    }
+
+    // Filtros
+    document.getElementById('filtros').addEventListener('click', e => {
+        if (!e.target.classList.contains('filtro-btn')) return;
+        document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('activo'));
+        e.target.classList.add('activo');
+        especieFiltro = e.target.dataset.especie;
+        cargarMascotas();
+    });
+
+    // Logout
+    document.getElementById('btn-logout').addEventListener('click', e => {
+        e.preventDefault();
+        Api.logout();
+    });
+
+    cargarMascotas();
+</script>
+</body>
+</html>
