@@ -34,7 +34,12 @@ public class Usuario {
     private boolean activo = true;
 
     @Column(name = "fecha_registro", nullable = false, updatable = false)
-    private LocalDateTime fechaRegistro = LocalDateTime.now();
+    private LocalDateTime fechaRegistro;
+
+    @PrePersist
+    public void prePersist() {
+    this.fechaRegistro = LocalDateTime.now();
+}
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
