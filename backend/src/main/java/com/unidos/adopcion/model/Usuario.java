@@ -30,7 +30,7 @@ public class Usuario {
     private String telefono;
     private String direccion;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
     private boolean activo = true;
 
     @Column(name = "fecha_registro", nullable = false, updatable = false)
