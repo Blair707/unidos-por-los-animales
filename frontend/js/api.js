@@ -2,7 +2,7 @@
    api.js - Cliente HTTP para la API REST
    ============================================================ */
 
-const API_BASE = 'http://localhost:8080/api';
+const API_BASE = 'https://unidos-por-los-animales-production.up.railway.app/api';
 
 const Api = {
     // ---- Token ----
