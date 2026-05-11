@@ -31,13 +31,14 @@ public class AuthService {
     }
 
     public Usuario registrar(Usuario datos) {
-        if (usuarioRepo.existsByEmail(datos.getEmail())) {
-            throw new IllegalArgumentException("El email ya está registrado.");
-        }
-        datos.setPassword(encoder.encode(datos.getPassword()));
-        Rol rolUsuario = rolRepo.findByNombre("ROLE_USUARIO")
-                .orElseThrow(() -> new RuntimeException("Rol no encontrado"));
-        datos.setRoles(Set.of(rolUsuario));
-        return usuarioRepo.save(datos);
+    if (usuarioRepo.existsByEmail(datos.getEmail())) {
+        throw new IllegalArgumentException("El email ya está registrado.");
     }
+    datos.setPassword(encoder.encode(datos.getPassword()));
+    datos.setActivo(true);  // <-- agregar esta línea
+    Rol rolUsuario = rolRepo.findByNombre("ROLE_USUARIO")
+            .orElseThrow(() -> new RuntimeException("Rol no encontrado"));
+    datos.setRoles(Set.of(rolUsuario));
+    return usuarioRepo.save(datos);
+}
 }
