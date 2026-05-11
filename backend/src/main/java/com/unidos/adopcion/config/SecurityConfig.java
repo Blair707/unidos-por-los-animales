@@ -33,19 +33,11 @@ public class SecurityConfig {
     @Autowired private UsuarioDetailsService userDetailsService;
 
     @Value("${app.cors.allowed-origins}")
-    private String[] allowedOrigins;
+    private String allowedOriginsStr;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
-    }
-
-    @Bean
-    public DaoAuthenticationProvider authProvider() {
-        DaoAuthenticationProvider p = new DaoAuthenticationProvider();
-        p.setUserDetailsService(userDetailsService);
-        p.setPasswordEncoder(passwordEncoder());
-        return p;
     }
 
     @Bean
@@ -59,14 +51,12 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigSource()))
             .csrf(csrf -> csrf.disable())
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authenticationProvider(authProvider())
             .authorizeHttpRequests(auth -> auth
-                // Endpoints públicos
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/mascotas/**").permitAll()
-                // Solicitudes y mensajes: solo usuarios autenticados
                 .requestMatchers("/api/solicitudes/**").authenticated()
                 .requestMatchers("/api/mensajes/**").authenticated()
-                // Administración: solo ADMIN o COORDINADOR
                 .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "COORDINADOR")
                 .anyRequest().authenticated()
             )
@@ -76,9 +66,18 @@ public class SecurityConfig {
     }
 
     @Bean
+    public DaoAuthenticationProvider authProvider() {
+        DaoAuthenticationProvider p = new DaoAuthenticationProvider();
+        p.setUserDetailsService(userDetailsService);
+        p.setPasswordEncoder(passwordEncoder());
+        return p;
+    }
+
+    @Bean
     public CorsConfigurationSource corsConfigSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(Arrays.asList(allowedOrigins));
+        List<String> origins = Arrays.asList(allowedOriginsStr.split(","));
+        config.setAllowedOrigins(origins);
         config.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
